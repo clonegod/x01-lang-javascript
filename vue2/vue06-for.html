@@ -1,0 +1,276 @@
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <script src="./vue.js"></script>
+</head>
+
+<body>
+    <!-- 列表渲染 -->
+
+    <!-- v-for -->
+    <!-- v-for 指令根据一组数组的选项列表进行渲染。 
+        v-for 指令需要以 item in items 形式的特殊语法， items 是源数据数组并且 item 是数组元素迭代的别名。 
+        在 v-for 块中，拥有对父作用域属性的完全访问权限。 
+    -->
+    <ul id="example-1">
+        <li v-for="item in items">
+            {{ item.message }}
+        </li>
+        <!-- 可以用 of 替代 in 对数组进行迭代 -->
+        <li v-for="(item, index) of items">
+            {{ parentMessage }} - {{ index }} - {{ item.message }}
+        </li>
+    </ul>
+
+    <!-- Template v-for -->
+    <!-- 可以用带有 v-for 的 <template> 标签来渲染多个元素块 -->
+    <ul id="example-2">
+        <template v-for="item in items">
+            <li>{{ item.msg }}</li>
+            <li class="divider"></li>
+        </template>
+    </ul>
+
+    <!-- 对象迭代 v-for -->
+    <!-- 用 v-for 通过一个对象的属性来迭代: 在遍历对象时，是按 Object.keys() 的结果遍历 -->
+    <ul id="repeat-object" class="demo">
+        <li v-for="value in object">
+            {{ value }}
+        </li>
+        <li v-for="(value, key, index) in object">
+            {{ index }}. {{ key }} : {{ value }}
+        </li>
+    </ul>
+
+    <!-- 整数迭代 v-for -->
+    <div id="numbers">
+        <span v-for="n in 10">{{ n }} </span>
+    </div>
+
+    <!-- 组件 和 v-for -->
+    <!-- 
+        1. 声明组件：Vue.component(props:[], template:function(){...})
+        2. 创建父容器的Vue实例，绑定到父元素的dom节点上。
+        3. 在组件上使用v-for遍历父容器中data所配置的列表/数组。
+        4. 使用v-bind将组件的属性（由props声明）绑定到迭代过程中的item。
+        5. 在组件的template中使用props中的数据。
+        6. 最后，将自定义组件更新为填充好数据的template字符串。
+    -->
+    <div id="mycomp">
+        <my-component
+        v-for="(item, index) in taskList"
+        v-bind:task="item"
+        v-bind:index="index">
+        </my-component>
+    </div>
+
+
+    <div id="todo-list-example">
+        <input
+            v-model="newTodoText"
+            v-on:keyup.enter="addNewTodo"
+            placeholder="Add a todo"
+        >
+        <ul>
+            <li
+                is="todo-item"
+                v-for="(todo, index) in todos"
+                v-bind:title="todo"
+                v-on:remove="todos.splice(index, 1)"
+            ></li>
+        </ul>
+    </div>
+
+    <!-- v-for with v-if -->
+    <!-- 当它们处于同一节点， v-for 的优先级比 v-if 更高 -->
+    <!-- 最外层v-if控制是否需要循环， v-for中的v-if控制是否需要进行本次迭代 -->
+    <div id="forwithif">
+        <ul v-if="shouldRenderTodos">
+            <li v-for="todo in todos" v-if="!todo.isComplete">
+                {{ todo }}
+            </li>
+        </ul>
+    </div>
+
+    <!-- v-for key -->
+    <!-- 当 Vue.js 用 v-for 正在更新已渲染过的元素列表时，它默认用 “就地复用” 策略。 -->
+    <!-- 为了给 Vue 一个提示，以便它能跟踪每个节点的身份，从而重用和重新排序现有元素，你需要为每项提供一个唯一 key 属性。
+        理想的 key 值是每项都有唯一 id。 -->
+     <div v-for="item in items" :key="item.id">
+        <!-- 内容 -->
+    </div>
+
+    <!-- 数组更新检测 -->
+    <!-- 
+        变异方法: 会改变被这些方法调用的原始数组, 会触发视图更新。
+            push()
+            pop()
+            shift()
+            unshift()
+            splice()
+            sort()
+            reverse()
+        重塑数组：不会改变原始数组，但总是返回一个新数组。当使用非变异方法时，可以用新数组替换旧数组。
+            Vue 实现了一些智能启发式方法来最大化 DOM 元素重用，所以用一个含有相同元素的数组去替换原来的数组是非常高效的操作。
+            example1.items = example1.items.filter(function (item) {
+                return item.message.match(/Foo/)
+            })
+        注意事项：由于 JavaScript 的限制， Vue 不能检测以下变动的数组：
+            当你利用索引直接设置一个项时，例如： vm.items[indexOfItem] = newValue
+            当你修改数组的长度时，例如： vm.items.length = newLength
+            
+            为了解决第一类问题，以下两种方式都可以实现和 vm.items[indexOfItem] = newValue 相同的效果， 同时也将触发状态更新：
+            // Vue.set
+            Vue.set(example1.items, indexOfItem, newValue)
+            // Array.prototype.splice`
+            example1.items.splice(indexOfItem, 1, newValue)
+            
+            为了解决第二类问题，你也同样可以使用 splice：
+            example1.items.splice(newLength)
+    -->
+
+    <!-- 显示过滤/排序结果 -->
+    <!-- 有时，我们想要显示一个数组的过滤或排序副本，而不实际改变或重置原始数据。在这种情况下，可以创建返回过滤或排序数组的计算属性。 -->
+    <div id="filter1">
+        <li v-for="n in evenNumbers">{{ n }}</li>
+    </div>
+
+    <!-- 计算属性不适用的情况下 (嵌套 v-for 循环中) 使用 method 方法 -->
+    <div id="filter2">
+        <li v-for="n in even(numbers)">{{ n }}</li> <!-- 先调用method获取满足条件的元素列表，再进行迭代-->
+        <li v-for="n in numbers" v-if="isOdd(n)">{{ n }}</li> <!-- 在迭代过程中判断当前元素是否有效 -->
+    </div>
+
+
+</body>
+
+<script>
+    var example1 = new Vue({
+        el: '#example-1',
+        data: {
+            parentMessage: 'Parent-' + Math.random(),
+            items: [
+                { message: 'Foo' },
+                { message: 'Bar' }
+            ]
+        }
+    })
+    var example2 = new Vue({
+        el: '#example-2',
+        data: {
+            items: [
+                { msg: 'Foo2' },
+                { msg: 'Bar2' }
+            ]
+        }
+    })
+
+    new Vue({
+        el: '#repeat-object',
+        data: {
+            object: {
+            FirstName: 'John',
+            LastName: 'Doe',
+            Age: 30
+            }
+        }
+    })
+
+    new Vue({
+        el: "#numbers"
+    })
+
+    // 声明组件
+    Vue.component('my-component', {
+        props: ['task', 'index'],
+        template: '<li>{{ index }} --- {{ task }}</li>'
+    })
+    // 实例化组件的父容器，配置组件的data属性
+    new Vue({
+        el: '#mycomp',
+        data: {
+            taskList: ['task1', 'task2', 'task3']
+        }
+    })
+
+    // 声明组件
+    Vue.component('todo-item', {
+        props: ['title'],
+        // $emit(evt) 触发某个事件
+        template: '\
+            <li>\
+            {{ title }}\
+            <button v-on:click="$emit(\'remove\')">X</button>\
+            </li>\
+        '
+    })
+    // 实例化父容器，设置data， 编写回调函数method
+    new Vue({
+        el: '#todo-list-example',
+        data: {
+            newTodoText: '',
+            todos: [
+                'Do the dishes',
+                'Take out the trash',
+                'Mow the lawn'
+            ]
+        },
+        methods: {
+            addNewTodo: function () {
+                if(this.newTodoText) {
+                    this.todos.push(this.newTodoText)
+                    this.newTodoText = ''
+                }
+            }
+        }
+    })
+
+    // 
+    new Vue({
+        el: "#forwithif",
+        data: {
+            shouldRenderTodos: Math.random() > 0.5,
+            todos: [
+                {title: 'Do the dishes', isComplete: false},
+                {title: 'Take out the trash', isComplete: true},
+                {title: 'Mow the lawn', isComplete: false}
+            ]
+        }
+    })
+
+    // filter
+    new Vue({
+        el: "#filter1",
+        data: {
+             numbers: [ 1, 2, 3, 4, 5 ]
+        },
+        // 待遍历的数组由computed计算得到
+        computed: {
+            evenNumbers: function () {
+                return this.numbers.filter(function (number) {
+                    return number % 2 === 0
+                })
+            }
+        }
+    })
+    new Vue({
+        el: "#filter2",
+        data: {
+            numbers: [ 1, 2, 3, 4, 5 ]
+        },
+        // 通过method来处理被迭代的数组列表
+        methods: {
+            even: function (numbers) {
+                return numbers.filter(function (number) {
+                return number % 2 === 0
+                })
+            },
+            isOdd: function (number) {
+                return number % 2 === 1
+            }
+        }
+    })
+</script>
+
+</html>

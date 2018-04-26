@@ -1,0 +1,1 @@
+console.log("½ø³Ì " + process.argv[2] + " Ö´ÐÐ¡£" );

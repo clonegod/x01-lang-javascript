@@ -1,0 +1,15 @@
+{
+  "name": "koa2-v2",
+  "version": "1.0.0",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+        "koa": "2.0.0",
+        "koa-bodyparser": "3.2.0",
+        "koa-router": "7.0.0"
+    },
+  "author": "",
+  "license": "ISC"
+}

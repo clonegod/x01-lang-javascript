@@ -1,0 +1,180 @@
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <script src="./vue.js"></script>
+</head>
+
+<body>
+    <!-- 计算属性 -->
+
+    <!-- 基础例子，使用计算属性封装值的逻辑，提高复用性 -->
+    <div id="example">
+        <p>Original message: "{{ message }}"</p>
+        <p>Reversed message: "{{ message.split('').reverse().join('') }}"</p>
+        <!-- 计算缓存 vs Methods -->
+        <p>Computed reversed message1: "{{ reversedMessage }}"</p>
+        <p>Computed reversed message2: "{{ reversedMessage }}"</p>
+        <p>Reversed message by method1: "{{ reversedMessageByMethod() }}"</p>
+        <p>Reversed message by method2: "{{ reversedMessageByMethod() }}"</p>
+    </div>
+
+    <div>
+        <!-- Computed 属性 vs Watched 属性 -->
+        <!-- Vue 确实提供了一种更通用的方式来观察和响应 Vue 实例上的数据变动：watch 属性。 -->
+        <div id="demo1">{{ fullName }}</div>
+        <div id="demo2">
+            {{ fullName }}
+            <button v-on:click="setFullNameByMethod">设置fullName</button>
+        </div>
+    </div>
+
+    <!-- 观察 Watchers 
+    当你想要在数据变化响应时，执行异步操作或开销较大的操作， Vue 提供一个更通用的方法通过 watch 选项，来响应数据的变化。
+    在这个示例中，使用 watch 选项允许我们执行异步操作（访问一个 API），限制我们执行该操作的频率，并在我们得到最终结果前，设置中间状态。
+    这是计算属性无法做到的。
+    -->
+    <div id="watch-example">
+        <p>
+            Ask a yes/no question:
+            <input v-model="question">
+        </p>
+        <p>{{ answer }}</p>
+    </div>
+
+</body>
+
+<!--  ajax libraries  -->
+<script src="./axios.min.js"></script>
+
+<!-- lodash 限制操作频率的函数 -->
+<script src="./lodash.min.js"></script>
+
+<script>
+    var vm = new Vue({
+        el: '#example',
+        data: {
+            message: 'Hello'
+        },
+        computed: {
+            // 声明了一个计算属性 reversedMessage,该函数将用作属性 vm.reversedMessage 的 getter
+            // a computed getter
+            reversedMessage: function () {
+                // `this` points to the vm instance
+                //计算属性是基于它们的依赖进行缓存的
+                alert('计算属性只有在它的相关依赖发生改变时才会重新求值。');
+                return this.message.split('').reverse().join('')
+            }
+        },
+        methods: {
+            reversedMessageByMethod: function () {
+                alert('只要发生重新渲染，method 调用总会执行该函数');
+                return this.message.split('').reverse().join('')
+            }
+        }
+    })
+
+    // compute vs watch
+    // 使用watch比较繁琐
+    var vm1 = new Vue({
+        el: '#demo1',
+        data: {
+            firstName: 'Foo',
+            lastName: 'Bar',
+            fullName: 'Foo Bar'
+        },
+        watch: {
+            firstName: function (val) {
+                this.fullName = val + ' ' + this.lastName
+            },
+            lastName: function (val) {
+                this.fullName = this.firstName + ' ' + val
+            }
+        }
+    })
+
+    // 通常更好的想法是使用 computed 属性而不是命令式的 watch 回调。
+    // 使用compute代码更简洁
+    var vm2 = new Vue({
+        el: '#demo2',
+        data: {
+            firstName: 'Foo',
+            lastName: 'Bar'
+        },
+        computed: {
+            // 相当于getter
+            // fullName: function () {
+            //     return this.firstName + ' ' + this.lastName
+            // }
+
+            // 计算属性默认只有 getter ，不过在需要时你也可以提供一个 setter ：
+            fullName: {
+                // getter
+                get: function () {
+                    return this.firstName + ' ' + this.lastName
+                },
+                // setter
+                set: function (newValue) {
+                    var names = newValue.split(' ')
+                    this.firstName = names[0]
+                    this.lastName = names[names.length - 1]
+                }
+            }
+        },
+        methods: {
+            // 设置fullName会自动更新vm.firstName 和 vm.lastName
+            setFullNameByMethod: function () {
+                vm2.fullName = "John Doe";
+            }
+        }
+    })
+
+
+    // 观察 Watchers
+    new Vue({
+        el: '#watch-example',
+        data: {
+            question: '',
+            answer: 'I cannot give you an answer until you ask a question!'
+        },
+        watch: {
+            // 如果 question 发生改变，这个函数就会运行
+            question: function (newQuestion) {
+                // 设置初始answer
+                this.answer = 'Waiting for you to stop typing...'
+                // 异步从服务器加载answer
+                this.getAnswer()
+            }
+        },
+        methods: {
+            // _.debounce 是一个通过 lodash 限制操作频率的函数。
+            // 在这个例子中，我们希望限制访问yesno.wtf/api的频率
+            // ajax请求直到用户输入完毕才会发出
+            // 学习更多关于 _.debounce function (and its cousin_.throttle), 参考: https://lodash.com/docs#debounce
+            // 使用 watch 选项允许我们执行异步操作（访问一个 API），限制我们执行该操作的频率，并在我们得到最终结果前，设置中间状态。
+            // 这是计算属性无法做到的。
+            getAnswer: _.debounce(
+                function () {
+                    var vm = this
+                    if (this.question.indexOf('?') === -1) {
+                        vm.answer = 'Questions usually contain a question mark. ;-)'
+                        return
+                    }
+                    vm.answer = 'Thinking...'
+                    axios.get('https://yesno.wtf/api')
+                        .then(function (response) { 
+                            // 成功响应后，更新answer
+                            vm.answer = _.capitalize(response.data.answer)
+                        })
+                        .catch(function (error) {
+                            vm.answer = 'Error! Could not reach the API. ' + error
+                        })
+                },
+                500 // 这是我们为用户停止输入等待的毫秒数
+            )
+        }
+    })
+
+</script>
+
+</html>
